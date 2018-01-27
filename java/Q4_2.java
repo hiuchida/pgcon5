@@ -1,9 +1,9 @@
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.TreeMap;
 import java.util.Scanner;
 
-class Main {
+public class Q4_2 {
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
 
@@ -13,41 +13,41 @@ class Main {
         for (int i = 0; i < n; i++) {
             tr[i] = in.nextLine();
         }
-        HashMap<String, String> map = new HashMap<>();
+        TreeMap<String, String> map = new TreeMap<>();
         String read;
         while (in.hasNextLine()) {
             read = in.nextLine();
-            String[] record = read.split(" ");
-            map.put(record[0], read);
+            map.put(read.substring(0, 9), read);
         }
         ArrayList<String> error = new ArrayList<>();
         for (String str : tr) {
-            String[] a = str.split(" ");
-            switch (a[0]) {
-            case "I":
-                if (map.containsKey(a[1])) {
+            char cmd = str.charAt(0);
+            String id = str.substring(2, 11);
+            switch (cmd) {
+            case 'I':
+                if (map.containsKey(id)) {
                     error.add(str);
                 } else {
-                    map.put(a[1], str.substring(2));
+                    map.put(id, str.substring(2));
                 }
                 break;
-            case "U":
-                if (!map.containsKey(a[1])) {
+            case 'U':
+                if (!map.containsKey(id)) {
                     error.add(str);
                 } else {
-                    map.put(a[1], str.substring(2));
+                    map.put(id, str.substring(2));
                 }
                 break;
-            case "D":
-                if (!map.containsKey(a[1])) {
+            case 'D':
+                if (!map.containsKey(id)) {
                     error.add(str);
                 } else {
-                    map.remove(a[1]);
+                    map.remove(id);
                 }
                 break;
             }
         }
-        map.keySet().stream().sorted().map(k -> map.get(k)).forEach(System.out::println);
-        error.stream().forEach(System.out::println);
+        map.keySet().stream().map(k -> map.get(k)).forEach(System.out::println);
+        error.forEach(System.out::println);
     }
 }
