@@ -11,8 +11,9 @@ public class Main {
         for (int i = 0; i < n; i++) {
             int a = in.nextInt();
             for (int k = a - 1; k <= a + 1; k++) {
-                if (map.containsKey(k)) {
-                    map.put(k, map.get(k) + 1);
+                Integer num = map.get(k);
+                if (num != null) {
+                    map.put(k, num + 1);
                 } else {
                     map.put(k, 1);
                 }
