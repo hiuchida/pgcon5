@@ -6,6 +6,16 @@ public class Main {
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
 
+        class Pair {
+            String phrase;
+            int value;
+        
+            public Pair(String s, int v) {
+                phrase = s;
+                value = v;
+            }
+        }
+
         ArrayList<Pair> list = new ArrayList<>();
         for (String s : in.nextLine().split(",")) {
             String[] pv = s.split("\\|");
@@ -32,15 +42,5 @@ public class Main {
             }
         }
         System.out.println(score);
-    }
-}
-
-class Pair {
-    String phrase;
-    int value;
-
-    public Pair(String s, int v) {
-        phrase = s;
-        value = v;
     }
 }
