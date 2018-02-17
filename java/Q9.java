@@ -7,16 +7,14 @@ public class Main {
     void solve(){
         Scanner in = new Scanner(System.in);
 
-        String[] sort = in.nextLine().split(" ");
+        String[] cond = in.nextLine().split(" ");
         ArrayList<Data> list = new ArrayList<>();
-
         while (in.hasNextLine()) {
             String s = in.nextLine();
-            list.add(new Data(s, s.split(" ")));
+            list.add(new Data(s));
         }
 
-        list.sort(new MyComparator(sort));
-
+        list.sort(new MyComparator(cond));
         list.forEach(System.out::println);
     }
     
@@ -29,9 +27,9 @@ class Data{
     String line;
     String[] cols;
 
-    public Data(String s, String[] ss){
+    public Data(String s){
         this.line = s;
-        this.cols = ss;
+        this.cols = s.split(" ");
     }
 
     @Override
@@ -42,20 +40,32 @@ class Data{
 
 class MyComparator implements Comparator<Data> {
 
-    String[] sort;
+    class Pair{
+        int idx;
+        int asc;
+        public Pair(String str){
+            idx = (str.charAt(0) - '0') - 1;
+            asc = str.charAt(1) == 'A' ? 1 : -1;
+        }
+    }
+    Pair[] cond;
 
     public MyComparator(String[] ss){
         super();
-        this.sort = ss;
+        cond = new Pair[ss.length];
+        for(int i = 0; i < ss.length; i++){
+            cond[i] = new Pair(ss[i]);
+        }
     }
+
     @Override
     public int compare(Data d1, Data d2){
-        for(String st : sort) {
-            int idx = st.charAt(0) - '0' -1;
-            if(d1.cols[idx].equals(d2.cols[idx])){
+        for(Pair st : cond) {
+            int result = d1.cols[st.idx].compareTo(d2.cols[st.idx]);
+            if(result == 0){
                 continue;
             }
-            return d1.cols[idx].compareTo(d2.cols[idx]) * (st.charAt(1) == 'A' ? 1 : -1);
+            return result * st.asc;
         }
         return 0;
     }
