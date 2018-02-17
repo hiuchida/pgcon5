@@ -1,65 +1,183 @@
 import java.util.Scanner;
 
-class Main {
+public class Main {
     static Scanner in = new Scanner(System.in);
 
-    int n, h, w;
-    String[][] display;
-
     void solve() {
-        init(24, 80);
+        Display display = new Display();
+        Analyzer analyzer = new Analyzer(display);
+
         int n = in.nextInt();
         in.nextLine();
-        for (int i = 0; i < n; i++) {
-            String line = in.nextLine();
-            if (line.charAt(5) == '*')
-                continue;
-            String str = line.substring(44).trim();
-            if (str.length() == 0)
-                continue;
-            if (str.startsWith("'")) {
-                int y = Integer.parseInt(line.substring(38, 41).trim()) - 1;
-                int x = Integer.parseInt(line.substring(41, 44).trim()) - 1;
-                display[y][x] = str.substring(1, str.length() - 1);
-
-            } else if (str.indexOf("DSPSIZ") > -1) {
-                setDisplaySize(str.substring(7, str.length() - 1));
-
-            } else if (str.indexOf("DSPATR") > -1) {
-                int size = Integer.parseInt(line.substring(29, 34).trim());
-                int y = Integer.parseInt(line.substring(38, 41).trim()) - 1;
-                int x = Integer.parseInt(line.substring(41, 44).trim()) - 1;
-                display[y][x] = createDSPATR(str.substring(7, str.length() - 1), size);
+        try{
+            for (int i = 0; i < n; i++) {
+                analyzer.analyz(in.nextLine());
             }
-        }
-        show();
-    }
-
-    void init(int y, int x) {
-        h = y;
-        w = x;
-        display = new String[h][w];
-        for (int i = 0; i < h; i++) {
-            for (int j = 0; j < w; j++) {
-                display[i][j] = " ";
-            }
+            display.show();
+        } catch(RuntimeException e) {
+            e.printStackTrace();
         }
     }
 
-    void setDisplaySize(String str) {
-        String[] ss = str.split(" ");
-        h = Integer.parseInt(ss[0].trim());
-        w = Integer.parseInt(ss[1].trim());
-        init(h, w);
+    public static void main(String[] args) {
+        new Main().solve();
+    }
+}
+
+class Analyzer {
+
+    Display display;
+
+    public Analyzer(Display display) {
+        this.display = display;
     }
 
-    String createDSPATR(String type, int size) {
+    void analyz(String str) throws RuntimeException {
+        // 7 comment
+        if(charAt(str, 7) == '*') {
+            return;
+        }
+        
+        String result = checkFixedString(str);
+        if(!result.equals("OK")) {
+            throw new RuntimeException(result);
+        }
+
+        // 19 - 28 field name
+        String field = substring(str, 19, 28);
+        if(!isBrankString(field) && field.startsWith(" ")){
+            throw new RuntimeException("The filed name must start with 19th digit.");
+        }
+        field = field.trim();
+        //30 - 34 field length
+        String strLen = substring(str, 30, 34);
+        if(field.length() > 0) {
+            if(!isBrankString(strLen) && strLen.endsWith(" ")){
+                throw new RuntimeException("The field length must be written right-justfield.");
+            }
+            if(!isNumber(strLen.trim())){
+                throw new RuntimeException("The field length must be numeric.");
+            }
+        }
+        int length = 0;
+        if(!isBrankString(strLen)){
+            length = Integer.parseInt(strLen.trim());
+        }
+
+        // 39 - 41, 42 - 44 position
+        // 45 - word
+        String posY = substring(str, 39, 41), posX = substring(str, 42, 44);
+        String word = substring(str, 45);
+        int y = 0, x = 0;
+        if(!word.startsWith("DSPSIZ")) {
+            if(isBrankString(posY) || isBrankString(posX)){
+                throw new RuntimeException("The position must be designation.");
+            }
+            if(posY.endsWith(" ") || posX.endsWith(" ")) {
+                throw new RuntimeException("the position must be written right-justfield.");
+            }
+            y = Integer.parseInt(posY.trim());
+            x = Integer.parseInt(posX.trim());
+        }
+        
+        if(word.startsWith("DSPSIZ")) {
+            setDisplaySize(word.trim());
+        } else if(word.startsWith("DSPATR")) {
+            String type = substring(word, 8, 9);
+            String line = createDSPATR(type, length);
+            display.setField(y, x, line);
+        } else {
+            String tmp = word.trim();
+            if(tmp.length() > 0 && (!tmp.startsWith("'") || !tmp.endsWith("'"))){
+                throw new RuntimeException("The string must be enclosed in single quotes.");
+            }
+            display.setField(y, x, substring(tmp.trim(), 2, tmp.length()-1));
+        }
+    }
+
+    String  checkFixedString(String str) {
+        // 1 - 5 brank
+        if(!isBrankString(substring(str, 1, 5))){
+            return "The 1st ~ 5th digits must be grank.";
+        }
+        // 6 'A'
+        if(charAt(str, 6) != 'A') {
+            return "The 6th digit must be 'A'.";
+        }
+        // 7 ' '
+        if(charAt(str, 7) != ' '){
+            return "The 6th digit must be '*' or ' '.";
+        }
+        // 8 - 18 brank
+        if(!isBrankString(substring(str, 8, 18))){            
+            return "The 8th ~ 18th digits must be grank.";
+        }
+        // 29 breank
+        if(charAt(str, 29) != ' '){
+            return "The 29th digit must be grank.";
+        }
+        // 35 - 38 brank
+        if(!isBrankString(substring(str, 35, 38))){            
+            return "The 35th ~ 38th digits must be grank.";
+        }
+        return "OK";
+    }
+
+    char charAt(String str, int idx){
+        return str.charAt(idx - 1);
+    }
+
+    String substring(String str, int startIdx, int endIdx) {
+        return str.substring(startIdx - 1, endIdx);
+    }
+
+    boolean isBrankString(String str) {
+        for(char c: str.toCharArray()){
+            if(c != ' ') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    boolean isNumber(String str) {
+        if(str.length() == 0){
+            return false;
+        }
+        for(char c : str.toCharArray()) {
+            if(c < '0' && '9' < c) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    String substring(String str, int startIdx){
+        return str.substring(startIdx - 1);
+    }
+
+    void setDisplaySize(String str) throws RuntimeException {
+        String[] ss = substring(str, 8, str.length() - 1).split(" ", 2);
+        String posY = ss[0].trim(), posX = ss[1].trim();
+        if(!isNumber(posY) || !isNumber(posX)){
+            throw new RuntimeException("The screen size must be numeric.");
+        }
+        int y = Integer.parseInt(posY), x = Integer.parseInt(posX);
+        display.init(y, x);
+    }
+
+    String createDSPATR(String type, int size) throws RuntimeException{
         StringBuilder sb = new StringBuilder();
         char ch = '\0';
-        if (type.equals("CS")) {
-            ch = '.';
-        }else if (type.equals("UL")) {
-            ch = '_';
+        switch(type) {
+            case "CS":
+                ch = '.';
+                break;
+            case "UL":
+                ch = '_';
+                break;
+            default:
+                throw new RuntimeException();
         }
 
         for (int i = 0; i < size; i++) {
@@ -68,18 +186,38 @@ class Main {
 
         return sb.toString();
     }
+}
 
-    void show() {
-        for (int i = 0; i < h; i++) {
-            for (int j = 0; j < w; j++) {
-                System.out.print(display[i][j]);
-                j += display[i][j].length() - 1;
+class Display {
+    int height, width;
+    String view[][];
+
+    public Display(){
+        this.init(24, 80);
+    }
+
+    void init(int h, int w){
+        this.height = h;
+        this.width = w;
+        view = new String[height][width];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                view[y][x] = " ";
             }
-            System.out.println();
         }
     }
 
-    public static void main(String[] args) {
-        new Main().solve();
+    void setField(int y, int x, String str){
+        this.view[y - 1][x - 1] = str;
+    }
+
+    void show() {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                System.out.print(view[y][x]);
+                x += view[y][x].length() - 1;
+            }
+            System.out.println();
+        }
     }
 }
