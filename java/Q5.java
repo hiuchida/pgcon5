@@ -2,19 +2,20 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Scanner;
 
-public class Main {
+public class Q5 {
+
+    static class Pair {
+        String phrase;
+        int value;
+    
+        public Pair(String s, int v) {
+            phrase = s;
+            value = v;
+        }
+    }
+
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
-
-        class Pair {
-            String phrase;
-            int value;
-        
-            public Pair(String s, int v) {
-                phrase = s;
-                value = v;
-            }
-        }
 
         ArrayList<Pair> list = new ArrayList<>();
         for (String s : in.nextLine().split(",")) {
