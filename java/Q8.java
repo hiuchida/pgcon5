@@ -3,30 +3,29 @@ import java.io.BufferedInputStream;
 
 public class Main{
     public static void main(String[] args)throws Exception{
-        DataInputStream di = new DataInputStream(new BufferedInputStream(System.in));
+        BufferedInputStream in = new BufferedInputStream(System.in);
         
         byte b;
-        String num = "";
-        while(di.available() > 0){
-            b =  di.readByte();
-
+        StringBuilder num = new StringBuilder();
+        while((b = (byte)in.read()) != -1){
             if(b == 0x0a){
                 continue;
             }
-
-            if((b & 0x0f) == 0x0d || (b & 0x0f) == 0x0c) {
-                num += String.format("%x", b>>4 & 0x0f);
+            
+            byte upper4bit = (byte)((b>>4) & 0x0f); // upper 4 bit of b
+            byte lower4bit = (byte)(b & 0x0f);      // lower 4 bit of b
+            if(lower4bit == 0x0d || lower4bit == 0x0c) {
+                num.append(String.format("%x", upper4bit));
                 if(num.charAt(0) == '0'){
-                    num = num.substring(1);
+                    num.deleteCharAt(0);
                 }
-                if((b & 0x0f) == 0x0d){
-                    num = "-" + num;
+                if(lower4bit == 0x0d){
+                    num.insert(0, "-");
                 }
                 System.out.println(num);
-                num = "";
+                num = new StringBuilder();
             } else {
-                num += String.format("%02x", b);
-                
+                num.append(String.format("%02x", b));
             }
         }
     }
