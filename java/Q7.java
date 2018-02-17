@@ -14,7 +14,7 @@ public class Main{
         }
         double sum = 0;
         for(int i = 0; i < n; i++) {
-            sum += Math.pow(Math.abs(p[i] - q[i]), 2);
+            sum += Math.pow(p[i] - q[i], 2);
         }
         System.out.printf("%.2f\n", Math.sqrt(sum));
     }
