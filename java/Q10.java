@@ -33,11 +33,7 @@ class Analyzer {
             return;
         }
 
-        String field = substring(str, 19, 28).trim();
-        int length = 0;
-        if(!isBlankString(substring(str, 30, 34))){
-            length = parseInt(str, 30, 34);
-        }
+        
         String word = substring(str, 45).trim();
         if(word.startsWith("DSPSIZ")) {
             String[] ss = substring(word, 8, word.length() - 1).split(" ", 2);
@@ -50,11 +46,13 @@ class Analyzer {
             y = parseInt(str, 39, 41);
             x = parseInt(str, 42, 44);
             if(word.startsWith("DSPATR")) {
+                String field = substring(str, 19, 28).trim();
+                int length = parseInt(str, 30, 34);
                 String type = substring(word, 8, 9);
                 String line = createDSPATR(type, length);
-                display.setField(line, y, x);
+                display.setField(field, line, y, x);
             } else {
-                display.setField(substring(word, 2, word.length()-1), y, x);
+                display.setText(substring(word, 2, word.length()-1), y, x);
             }
         }
     }
@@ -208,10 +206,14 @@ class Display {
         field = new char[height][width];
     }
 
-    void setField(String str, int y, int x){
+    void setText(String str, int y, int x){
         for(int i = 0; i < str.length(); i++) {
             field[y - 1][(x + i) - 1] = str.charAt(i);
         }
+    }
+
+    void setField(String field, String str, int y, int x){
+        setText(str, y, x);
     }
 
     void show() {
