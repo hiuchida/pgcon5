@@ -9,7 +9,7 @@ public class Main {
 
         int n = in.nextInt();
         in.nextLine();
-        for (int i = 0; i < n; i++) {
+        while(n-- > 0) {
             analyzer.analyze(in.nextLine());
         }
         display.show();
@@ -59,7 +59,8 @@ class Analyzer {
 
         // 39 - 41, 42 - 44 position
         // 45 - word
-        String posY = substring(str, 39, 41), posX = substring(str, 42, 44);
+        String posY = substring(str, 39, 41);
+        String posX = substring(str, 42, 44);
         String word = substring(str, 45);
         int y = 0, x = 0;
         if(!word.startsWith("DSPSIZ")) {
@@ -123,6 +124,10 @@ class Analyzer {
         return str.substring(startIdx - 1, endIdx);
     }
 
+    String substring(String str, int startIdx){
+        return str.substring(startIdx - 1);
+    }
+
     boolean isBlankString(String str) {
         for(char c: str.toCharArray()){
             if(c != ' ') {
@@ -144,23 +149,22 @@ class Analyzer {
         return true;
     }
 
-    String substring(String str, int startIdx){
-        return str.substring(startIdx - 1);
-    }
 
     void setDisplaySize(String str) {
         String[] ss = substring(str, 8, str.length() - 1).split(" ", 2);
-        String posY = ss[0].trim(), posX = ss[1].trim();
+        String posY = ss[0].trim();
+        String posX = ss[1].trim();
         if(!isNumber(posY) || !isNumber(posX)){
             throw new RuntimeException("The screen size must be numeric.");
         }
-        int y = Integer.parseInt(posY), x = Integer.parseInt(posX);
+        int y = Integer.parseInt(posY);
+        int x = Integer.parseInt(posX);
         display.init(y, x);
     }
 
     String createDSPATR(String type, int size) {
         StringBuilder sb = new StringBuilder();
-        char ch = '\0';
+        char ch;
         switch(type) {
             case "CS":
                 ch = '.';
@@ -169,7 +173,7 @@ class Analyzer {
                 ch = '_';
                 break;
             default:
-                throw new RuntimeException();
+                throw new RuntimeException("In DPSATR(). The type must be reserved word.(CS or UL)");
         }
 
         for (int i = 0; i < size; i++) {
@@ -182,7 +186,7 @@ class Analyzer {
 
 class Display {
     int height, width;
-    String view[][];
+    String field[][];
 
     public Display(){
         this.init(24, 80);
@@ -191,23 +195,22 @@ class Display {
     void init(int h, int w){
         this.height = h;
         this.width = w;
-        view = new String[height][width];
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                view[y][x] = " ";
-            }
-        }
+        field = new String[height][width];
     }
 
     void setField(int y, int x, String str){
-        this.view[y - 1][x - 1] = str;
+        this.field[y - 1][x - 1] = str;
     }
 
     void show() {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                System.out.print(view[y][x]);
-                x += view[y][x].length() - 1;
+                if(field[y][x] == null) {
+                    System.out.print(" ");
+                } else {
+                    System.out.print(field[y][x]);
+                    x += field[y][x].length() - 1;
+                }
             }
             System.out.println();
         }
