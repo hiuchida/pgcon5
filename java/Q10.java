@@ -1,9 +1,11 @@
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
-    static Scanner in = new Scanner(System.in);
 
-    void solve() {
+    private void solve() {
+        Scanner in = new Scanner(System.in);
+
         Display display = new Display();
         Analyzer analyzer = new Analyzer(display);
 
@@ -12,6 +14,7 @@ public class Main {
         while(n-- > 0) {
             analyzer.analyze(in.nextLine());
         }
+        display.flush();
         display.show();
     }
 
@@ -28,12 +31,11 @@ class Analyzer {
         this.display = display;
     }
 
-    void analyze(String str) {
+    public void analyze(String str) {
         if(check(str)) {
             return;
         }
 
-        
         String word = substring(str, 45).trim();
         if(word.startsWith("DSPSIZ")) {
             String[] ss = substring(word, 8, word.length() - 1).split(" ", 2);
@@ -41,15 +43,13 @@ class Analyzer {
             int height = parseInt(ss[1]);
             display.init(width, height);
         } else {
-            int y = 0;
-            int x = 0;
-            y = parseInt(str, 39, 41);
-            x = parseInt(str, 42, 44);
+            int y = parseInt(str, 39, 41);
+            int x = parseInt(str, 42, 44);
             if(word.startsWith("DSPATR")) {
                 String field = substring(str, 19, 28).trim();
                 int length = parseInt(str, 30, 34);
                 String type = substring(word, 8, 9);
-                String line = createDSPATR(type, length);
+                String line = Display.createDSPATR(type, length);
                 display.setField(field, line, y, x);
             } else {
                 display.setText(substring(word, 2, word.length()-1), y, x);
@@ -57,12 +57,11 @@ class Analyzer {
         }
     }
 
-    boolean check(String str) {
+    private boolean check(String str) {
         // 7 comment
         if(charAt(str, 7) == '*') {
             return true;
         }
-
         // 1 - 5 brank
         if(!isBlankString(substring(str, 1, 5))){
             throw new RuntimeException("The 1st ~ 5th digits must be grank.");
@@ -129,27 +128,27 @@ class Analyzer {
         return false;
     }
 
-    char charAt(String str, int idx){
+    private char charAt(String str, int idx){
         return str.charAt(idx - 1);
     }
 
-    String substring(String str, int startIdx, int endIdx) {
+    private String substring(String str, int startIdx, int endIdx) {
         return str.substring(startIdx - 1, endIdx);
     }
 
-    String substring(String str, int startIdx){
+    private String substring(String str, int startIdx){
         return str.substring(startIdx - 1);
     }
 
-    Integer parseInt(String str, int startIdx, int endIdx){
+    private Integer parseInt(String str, int startIdx, int endIdx){
         return Integer.parseInt(substring(str, startIdx, endIdx).trim());
     }
 
-    Integer parseInt(String str) {
+    private Integer parseInt(String str) {
         return Integer.parseInt(str.trim());
     }
 
-    boolean isBlankString(String str) {
+    private boolean isBlankString(String str) {
         for(char c: str.toCharArray()){
             if(c != ' ') {
                 return false;
@@ -158,7 +157,7 @@ class Analyzer {
         return true;
     }
 
-    boolean isNumber(String str) {
+    private boolean isNumber(String str) {
         if(str.length() == 0){
             return false;
         }
@@ -169,8 +168,59 @@ class Analyzer {
         }
         return true;
     }
+}
 
-    String createDSPATR(String type, int size) {
+class Display {
+    int height, width;
+    char text[][];
+    ArrayList<Field> fields;
+
+    public Display(){
+        this.init(24, 80);
+        fields = new ArrayList<>();
+    }
+
+    public void init(int h, int w){
+        this.height = h;
+        this.width = w;
+        text = new char[height][width];
+        for(int y = 0; y < height; y++){
+            for(int x = 0; x < width; x++){
+                text[y][x] = ' ';
+            }
+        }
+    }
+
+    private void setChar(char ch, int y, int x){
+        text[y - 1][x - 1] = ch;
+    }
+
+    public void setText(String str, int y, int x){
+        for(int i = 0; i < str.length(); i++) {
+            setChar(str.charAt(i), y, x + i);
+        }
+    }
+
+    public void setField(String name, String str, int y, int x){
+        fields.add(new Field(name, str, y, x));
+    }
+
+    public void flush(){
+        for(Field f: fields){
+            setText(f.toString(), f.posY, f.posX);
+        }
+    }
+
+    public void show() {
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                System.out.print(text[y][x]);
+            }
+            System.out.println();
+        }
+    }
+
+    public static String createDSPATR(String type, int length) {
         StringBuilder sb = new StringBuilder();
         char ch;
         switch(type) {
@@ -184,44 +234,33 @@ class Analyzer {
                 throw new RuntimeException("In DPSATR(). The type must be reserved word.(CS or UL)");
         }
 
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < length; i++) {
             sb.append(ch);
         }
-
         return sb.toString();
     }
 }
 
-class Display {
-    int height, width;
-    char field[][];
+class Field {
+    String name;
+    String line;
+    String value;
+    int posY;
+    int posX;
 
-    public Display(){
-        this.init(24, 80);
+    public Field(String name, String line, int y, int x) {
+        this.name = name;
+        this.line = line;
+        this.value = "";
+        this.posY = y;
+        this.posX = x;
     }
 
-    void init(int h, int w){
-        this.height = h;
-        this.width = w;
-        field = new char[height][width];
-    }
-
-    void setText(String str, int y, int x){
-        for(int i = 0; i < str.length(); i++) {
-            field[y - 1][(x + i) - 1] = str.charAt(i);
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < line.length(); i++){
+            sb.append(i < value.length() ? value.charAt(i): line.charAt(i));
         }
-    }
-
-    void setField(String field, String str, int y, int x){
-        setText(str, y, x);
-    }
-
-    void show() {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                System.out.print(field[y][x] == '\0' ? ' ' : field[y][x]);
-            }
-            System.out.println();
-        }
+        return sb.toString();
     }
 }
