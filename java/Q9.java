@@ -40,32 +40,31 @@ class Data{
 
 class MyComparator implements Comparator<Data> {
 
-    class Pair{
+    class Condition{
         int idx;
-        int asc;
-        public Pair(String str){
+        int sign;
+        public Condition(String str){
             idx = (str.charAt(0) - '0') - 1;
-            asc = str.charAt(1) == 'A' ? 1 : -1;
+            sign = str.charAt(1) == 'A' ? 1 : -1;
         }
     }
-    Pair[] cond;
+    Condition[] cond;
 
     public MyComparator(String[] ss){
         super();
-        cond = new Pair[ss.length];
+        cond = new Condition[ss.length];
         for(int i = 0; i < ss.length; i++){
-            cond[i] = new Pair(ss[i]);
+            cond[i] = new Condition(ss[i]);
         }
     }
 
     @Override
     public int compare(Data d1, Data d2){
-        for(Pair st : cond) {
-            int result = d1.cols[st.idx].compareTo(d2.cols[st.idx]);
-            if(result == 0){
-                continue;
+        for(Condition ct : cond) {
+            int result = d1.cols[ct.idx].compareTo(d2.cols[ct.idx]);
+            if(result != 0){
+                return ct.sign * result;
             }
-            return result * st.asc;
         }
         return 0;
     }
