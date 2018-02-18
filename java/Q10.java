@@ -56,9 +56,9 @@ class Analyzer {
         } else if(word.startsWith("DSPATR")) {
             String type = substring(word, 8, 9);
             String line = createDSPATR(type, length);
-            display.setField(y, x, line);
+            display.setField(line, y, x);
         } else {
-            display.setField(y, x, substring(tmp.trim(), 2, tmp.length()-1));
+            display.setField(substring(tmp.trim(), 2, tmp.length()-1), y, x);
         }
     }
 
@@ -193,7 +193,7 @@ class Analyzer {
 
 class Display {
     int height, width;
-    String field[][];
+    char field[][];
 
     public Display(){
         this.init(24, 80);
@@ -202,22 +202,19 @@ class Display {
     void init(int h, int w){
         this.height = h;
         this.width = w;
-        field = new String[height][width];
+        field = new char[height][width];
     }
 
-    void setField(int y, int x, String str){
-        this.field[y - 1][x - 1] = str;
+    void setField(String str, int y, int x){
+        for(int i = 0; i < str.length(); i++) {
+            field[y - 1][(x + i) - 1] = str.charAt(i);
+        }
     }
 
     void show() {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                if(field[y][x] == null) {
-                    System.out.print(" ");
-                } else {
-                    System.out.print(field[y][x]);
-                    x += field[y][x].length() - 1;
-                }
+                System.out.print(field[y][x] == '\0' ? ' ' : field[y][x]);
             }
             System.out.println();
         }
