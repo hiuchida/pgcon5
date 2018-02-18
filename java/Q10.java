@@ -1,21 +1,38 @@
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class Main {
+public class Main implements Handler{
+
+    Display display;
+    Analyzer analyzer;
+    ArrayList<Field> fields;
 
     private void solve() {
         Scanner in = new Scanner(System.in);
 
-        Display display = new Display();
-        Analyzer analyzer = new Analyzer(display);
+        display = new Display();
+        analyzer = new Analyzer(this);
+        fields = new ArrayList<>();
 
         int n = in.nextInt();
         in.nextLine();
         while(n-- > 0) {
             analyzer.analyze(in.nextLine());
         }
-        display.flush();
+        display.attach(fields);
         display.show();
+    }
+
+    public void init(int h, int w){
+        display.init(h, w);
+    }
+
+    public void setText(String str, int y, int x){
+        display.setText(str, y, x);
+    }
+
+    public void setField(String name, String type, int length, int y, int x){
+        fields.add(new Field(name, type, length, y, x));
     }
 
     public static void main(String[] args) {
@@ -23,12 +40,18 @@ public class Main {
     }
 }
 
+interface Handler {
+    void init(int h, int w);
+    void setText(String str, int y, int x);
+    void setField(String name, String type, int length, int y, int x);
+}
+
 class Analyzer {
 
-    Display display;
+    Handler handler;
 
-    public Analyzer(Display display) {
-        this.display = display;
+    public Analyzer(Handler handler) {
+        this.handler = handler;
     }
 
     public void analyze(String str) {
@@ -41,7 +64,7 @@ class Analyzer {
             String[] ss = substring(word, 8, word.length() - 1).split(" ", 2);
             int width = parseInt(ss[0]);
             int height = parseInt(ss[1]);
-            display.init(width, height);
+            handler.init(width, height);
         } else {
             int y = parseInt(str, 39, 41);
             int x = parseInt(str, 42, 44);
@@ -49,9 +72,9 @@ class Analyzer {
                 String field = substring(str, 19, 28).trim();
                 int length = parseInt(str, 30, 34);
                 String type = substring(word, 8, 9);
-                display.setField(field, type, length, y, x);
+                handler.setField(field, type, length, y, x);
             } else {
-                display.setText(substring(word, 2, word.length()-1), y, x);
+                handler.setText(substring(word, 2, word.length()-1), y, x);
             }
         }
     }
@@ -172,11 +195,9 @@ class Analyzer {
 class Display {
     int height, width;
     char text[][];
-    ArrayList<Field> fields;
 
     public Display(){
         this.init(24, 80);
-        fields = new ArrayList<>();
     }
 
     public void init(int h, int w){
@@ -190,17 +211,6 @@ class Display {
         }
     }
 
-    private char getLineChar(String type) {
-        switch(type) {
-            case "CS":
-                return '.';
-            case "UL":
-                return '_';
-            default:
-                throw new RuntimeException("In DPSATR(). The type must be reserved word.(CS or UL)");
-        }
-    }
-
     private void setChar(char ch, int y, int x){
         text[y - 1][x - 1] = ch;
     }
@@ -211,15 +221,10 @@ class Display {
         }
     }
 
-    public void setField(String name, String type, int length, int y, int x){
-        fields.add(new Field(name, type, length, y, x));
-    }
-
-    public void flush(){
+    public void attach(ArrayList<Field> fields){
         for(Field f: fields){
             for(int i = 0; i < f.length; i++) {
-                char ch = i < f.value.length() ? f.value.charAt(i) : getLineChar(f.type);
-                setChar(ch, f.posY, f.posX + i);
+                setChar(f.getChar(i), f.posY, f.posX + i);
             }
         }
     }
@@ -237,7 +242,7 @@ class Display {
 class Field {
     String name;
     String value;
-    String type;
+    char line;
     int length;
     int posY;
     int posX;
@@ -245,9 +250,24 @@ class Field {
     public Field(String name, String type, int length, int y, int x) {
         this.name = name;
         this.value = "";
-        this.type = type;
+        this.line = getLineChar(type);
         this.length = length;
         this.posY = y;
         this.posX = x;
+    }
+
+    private char getLineChar(String type) {
+        switch(type) {
+            case "CS":
+                return '.';
+            case "UL":
+                return '_';
+            default:
+                throw new RuntimeException("In DPSATR(). The type must be reserved word.(CS or UL)");
+        }
+    }
+
+    public char getChar(int idx){
+        return idx < value.length() ? value.charAt(idx) : line;
     }
 }
