@@ -49,8 +49,7 @@ class Analyzer {
                 String field = substring(str, 19, 28).trim();
                 int length = parseInt(str, 30, 34);
                 String type = substring(word, 8, 9);
-                String line = Display.createDSPATR(type, length);
-                display.setField(field, line, y, x);
+                display.setField(field, type, length, y, x);
             } else {
                 display.setText(substring(word, 2, word.length()-1), y, x);
             }
@@ -191,6 +190,17 @@ class Display {
         }
     }
 
+    private char getLineChar(String type) {
+        switch(type) {
+            case "CS":
+                return '.';
+            case "UL":
+                return '_';
+            default:
+                throw new RuntimeException("In DPSATR(). The type must be reserved word.(CS or UL)");
+        }
+    }
+
     private void setChar(char ch, int y, int x){
         text[y - 1][x - 1] = ch;
     }
@@ -201,13 +211,16 @@ class Display {
         }
     }
 
-    public void setField(String name, String str, int y, int x){
-        fields.add(new Field(name, str, y, x));
+    public void setField(String name, String type, int length, int y, int x){
+        fields.add(new Field(name, type, length, y, x));
     }
 
     public void flush(){
         for(Field f: fields){
-            setText(f.toString(), f.posY, f.posX);
+            for(int i = 0; i < f.length; i++) {
+                char ch = i < f.value.length() ? f.value.charAt(i) : getLineChar(f.type);
+                setChar(ch, f.posY, f.posX + i);
+            }
         }
     }
 
@@ -219,48 +232,22 @@ class Display {
             System.out.println();
         }
     }
-
-    public static String createDSPATR(String type, int length) {
-        StringBuilder sb = new StringBuilder();
-        char ch;
-        switch(type) {
-            case "CS":
-                ch = '.';
-                break;
-            case "UL":
-                ch = '_';
-                break;
-            default:
-                throw new RuntimeException("In DPSATR(). The type must be reserved word.(CS or UL)");
-        }
-
-        for (int i = 0; i < length; i++) {
-            sb.append(ch);
-        }
-        return sb.toString();
-    }
 }
 
 class Field {
     String name;
-    String line;
     String value;
+    String type;
+    int length;
     int posY;
     int posX;
 
-    public Field(String name, String line, int y, int x) {
+    public Field(String name, String type, int length, int y, int x) {
         this.name = name;
-        this.line = line;
         this.value = "";
+        this.type = type;
+        this.length = length;
         this.posY = y;
         this.posX = x;
-    }
-
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < line.length(); i++){
-            sb.append(i < value.length() ? value.charAt(i): line.charAt(i));
-        }
-        return sb.toString();
     }
 }
