@@ -34,62 +34,35 @@ class Analyzer {
             return;
         }
         
-        checkFixedString(str);
-
-        // 19 - 28 field name
-        String field = substring(str, 19, 28);
-        if(!isBlankString(field) && field.startsWith(" ")){
-            throw new RuntimeException("The filed name must start with 19th digit.");
-        }
-        field = field.trim();
-        //30 - 34 field length
-        String strLen = substring(str, 30, 34);
-        if(field.length() > 0) {
-            if(!isBlankString(strLen) && strLen.endsWith(" ")){
-                throw new RuntimeException("The field length must be written right-justfield.");
-            }
-            if(!isNumber(strLen.trim())){
-                throw new RuntimeException("The field length must be numeric.");
-            }
-        }
+        check(str);
+        String field = substring(str, 19, 28).trim();
         int length = 0;
-        if(!isBlankString(strLen)){
-            length = Integer.parseInt(strLen.trim());
+        if(!isBlankString(substring(str, 30, 34))){
+            length = parseInt(str, 30, 34);
         }
-
-        // 39 - 41, 42 - 44 position
-        // 45 - word
-        String posY = substring(str, 39, 41);
-        String posX = substring(str, 42, 44);
         String word = substring(str, 45);
-        int y = 0, x = 0;
+        int y = 0;
+        int x = 0;
         if(!word.startsWith("DSPSIZ")) {
-            if(isBlankString(posY) || isBlankString(posX)){
-                throw new RuntimeException("The position must be designation.");
-            }
-            if(posY.endsWith(" ") || posX.endsWith(" ")) {
-                throw new RuntimeException("the position must be written right-justfield.");
-            }
-            y = Integer.parseInt(posY.trim());
-            x = Integer.parseInt(posX.trim());
+            y = parseInt(str, 39, 41);
+            x = parseInt(str, 42, 44);
         }
-        
+        String tmp = word.trim();
         if(word.startsWith("DSPSIZ")) {
-            setDisplaySize(word.trim());
+            String[] ss = substring(tmp, 8, tmp.length() - 1).split(" ", 2);
+            int width = parseInt(ss[0]);
+            int height = parseInt(ss[1]);
+            display.init(width, height);
         } else if(word.startsWith("DSPATR")) {
             String type = substring(word, 8, 9);
             String line = createDSPATR(type, length);
             display.setField(y, x, line);
         } else {
-            String tmp = word.trim();
-            if(tmp.length() > 0 && (!tmp.startsWith("'") || !tmp.endsWith("'"))){
-                throw new RuntimeException("The string must be enclosed in single quotes.");
-            }
             display.setField(y, x, substring(tmp.trim(), 2, tmp.length()-1));
         }
     }
 
-    void  checkFixedString(String str) {
+    void  check(String str) {
         // 1 - 5 brank
         if(!isBlankString(substring(str, 1, 5))){
             throw new RuntimeException("The 1st ~ 5th digits must be grank.");
@@ -106,13 +79,52 @@ class Analyzer {
         if(!isBlankString(substring(str, 8, 18))){            
             throw new RuntimeException("The 8th ~ 18th digits must be grank.");
         }
+        // 19 - 28 field name
+        String field = substring(str, 19, 28);
+        if(!isBlankString(field) && field.startsWith(" ")){
+            throw new RuntimeException("The filed name must start with 19th digit.");
+        }
         // 29 breank
         if(charAt(str, 29) != ' '){
             throw new RuntimeException("The 29th digit must be grank.");
         }
+        //30 - 34 field length
+        String strLen = substring(str, 30, 34);
+        if(field.trim().length() > 0) {
+            if(!isBlankString(strLen) && strLen.endsWith(" ")){
+                throw new RuntimeException("The field length must be written right-justfield.");
+            }
+            if(!isNumber(strLen.trim())){
+                throw new RuntimeException("The field length must be numeric.");
+            }
+        }
         // 35 - 38 brank
         if(!isBlankString(substring(str, 35, 38))){            
             throw new RuntimeException("The 35th ~ 38th digits must be grank.");
+        }
+        // 39 - 41, 42 - 44 position
+        // 45 - word
+        String posY = substring(str, 39, 41);
+        String posX = substring(str, 42, 44);
+        String word = substring(str, 45);
+        String tmp = word.trim();
+        if(!word.startsWith("DSPSIZ")) {
+            if(isBlankString(posY) || isBlankString(posX)){
+                throw new RuntimeException("The position must be designation.");
+            }
+            if(posY.endsWith(" ") || posX.endsWith(" ")) {
+                throw new RuntimeException("the position must be written right-justfield.");
+            }
+            if(tmp.length() > 0 && !tmp.startsWith("DSPATR") && (!tmp.startsWith("'") || !tmp.endsWith("'"))){
+                throw new RuntimeException("The string must be enclosed in single quotes.");
+            }
+        } else {
+            String[] ss = substring(tmp, 8, tmp.length() - 1).split(" ", 2);
+            String widthStr = ss[0].trim();
+            String heightStr = ss[1].trim();
+            if(!isNumber(widthStr) || !isNumber(heightStr)){
+                throw new RuntimeException("The screen size must be numeric.");
+            }
         }
     }
 
@@ -126,6 +138,14 @@ class Analyzer {
 
     String substring(String str, int startIdx){
         return str.substring(startIdx - 1);
+    }
+
+    Integer parseInt(String str, int startIdx, int endIdx){
+        return Integer.parseInt(substring(str, startIdx, endIdx).trim());
+    }
+
+    Integer parseInt(String str) {
+        return Integer.parseInt(str.trim());
     }
 
     boolean isBlankString(String str) {
@@ -147,19 +167,6 @@ class Analyzer {
             }
         }
         return true;
-    }
-
-
-    void setDisplaySize(String str) {
-        String[] ss = substring(str, 8, str.length() - 1).split(" ", 2);
-        String posY = ss[0].trim();
-        String posX = ss[1].trim();
-        if(!isNumber(posY) || !isNumber(posX)){
-            throw new RuntimeException("The screen size must be numeric.");
-        }
-        int y = Integer.parseInt(posY);
-        int x = Integer.parseInt(posX);
-        display.init(y, x);
     }
 
     String createDSPATR(String type, int size) {
