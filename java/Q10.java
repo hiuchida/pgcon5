@@ -29,40 +29,42 @@ class Analyzer {
     }
 
     void analyze(String str) {
-        // 7 comment
-        if(charAt(str, 7) == '*') {
+        if(check(str)) {
             return;
         }
-        
-        check(str);
+
         String field = substring(str, 19, 28).trim();
         int length = 0;
         if(!isBlankString(substring(str, 30, 34))){
             length = parseInt(str, 30, 34);
         }
-        String word = substring(str, 45);
-        int y = 0;
-        int x = 0;
-        if(!word.startsWith("DSPSIZ")) {
-            y = parseInt(str, 39, 41);
-            x = parseInt(str, 42, 44);
-        }
-        String tmp = word.trim();
+        String word = substring(str, 45).trim();
         if(word.startsWith("DSPSIZ")) {
-            String[] ss = substring(tmp, 8, tmp.length() - 1).split(" ", 2);
+            String[] ss = substring(word, 8, word.length() - 1).split(" ", 2);
             int width = parseInt(ss[0]);
             int height = parseInt(ss[1]);
             display.init(width, height);
-        } else if(word.startsWith("DSPATR")) {
-            String type = substring(word, 8, 9);
-            String line = createDSPATR(type, length);
-            display.setField(line, y, x);
         } else {
-            display.setField(substring(tmp.trim(), 2, tmp.length()-1), y, x);
+            int y = 0;
+            int x = 0;
+            y = parseInt(str, 39, 41);
+            x = parseInt(str, 42, 44);
+            if(word.startsWith("DSPATR")) {
+                String type = substring(word, 8, 9);
+                String line = createDSPATR(type, length);
+                display.setField(line, y, x);
+            } else {
+                display.setField(substring(word, 2, word.length()-1), y, x);
+            }
         }
     }
 
-    void  check(String str) {
+    boolean check(String str) {
+        // 7 comment
+        if(charAt(str, 7) == '*') {
+            return true;
+        }
+
         // 1 - 5 brank
         if(!isBlankString(substring(str, 1, 5))){
             throw new RuntimeException("The 1st ~ 5th digits must be grank.");
@@ -126,6 +128,7 @@ class Analyzer {
                 throw new RuntimeException("The screen size must be numeric.");
             }
         }
+        return false;
     }
 
     char charAt(String str, int idx){
