@@ -1,26 +1,24 @@
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
-public class Main implements Handler{
-
-    Display display;
-    Analyzer analyzer;
-    ArrayList<Field> fields;
+public class Q10 implements Handler{
+    private Display display = new Display();
+    private FieldManager fieldMan = new FieldManager();
 
     private void solve() {
-        Scanner in = new Scanner(System.in);
-
-        display = new Display();
-        analyzer = new Analyzer(this);
-        fields = new ArrayList<>();
-
-        int n = in.nextInt();
-        in.nextLine();
-        while(n-- > 0) {
-            analyzer.analyze(in.nextLine());
-        }
-        display.attach(fields);
+    	Analyzer.analyze(System.in, this);
+        display.attachAll(fieldMan.getList());
         display.show();
+        Field f = fieldMan.getField("FIELD1");
+        if (f != null) {
+	        f.setValue("ABCDEF");
+	        display.attach(f);
+	        display.show();
+        }
     }
 
     public void init(int h, int w){
@@ -32,11 +30,11 @@ public class Main implements Handler{
     }
 
     public void setField(String name, String type, int length, int y, int x){
-        fields.add(new Field(name, type, length, y, x));
+        fieldMan.add(new Field(name, type, length, y, x));
     }
 
     public static void main(String[] args) {
-        new Main().solve();
+        new Q10().solve();
     }
 }
 
@@ -47,14 +45,30 @@ interface Handler {
 }
 
 class Analyzer {
+    public static void analyze(InputStream is, Handler handler) {
+    	new Analyzer(is, handler).analyze();
+    }
+    
+    private InputStream is;
+    private Handler handler;
 
-    Handler handler;
-
-    public Analyzer(Handler handler) {
+    public Analyzer(InputStream is, Handler handler) {
+    	this.is = is;
         this.handler = handler;
     }
 
-    public void analyze(String str) {
+    public void analyze() {
+        try (Scanner in = new Scanner(is)) {
+	        int n = in.nextInt();
+	        in.nextLine();
+	        while(n-- > 0) {
+	            analyze(in.nextLine());
+	        }
+        } finally {
+        }
+    }
+
+    private void analyze(String str) {
         if(check(str)) {
             return;
         }
@@ -162,11 +176,11 @@ class Analyzer {
         return str.substring(startIdx - 1);
     }
 
-    private Integer parseInt(String str, int startIdx, int endIdx){
+    private int parseInt(String str, int startIdx, int endIdx){
         return Integer.parseInt(substring(str, startIdx, endIdx).trim());
     }
 
-    private Integer parseInt(String str) {
+    private int parseInt(String str) {
         return Integer.parseInt(str.trim());
     }
 
@@ -193,26 +207,30 @@ class Analyzer {
 }
 
 class Display {
-    int height, width;
-    char text[][];
+	private int height, width;
+	private char text[][];
 
     public Display(){
         this.init(24, 80);
+    }
+
+    private void setChar(char ch, int y, int x){
+        text[y - 1][x - 1] = ch;
+    }
+
+    private char getChar(int y, int x){
+        return text[y - 1][x - 1];
     }
 
     public void init(int h, int w){
         this.height = h;
         this.width = w;
         text = new char[height][width];
-        for(int y = 0; y < height; y++){
-            for(int x = 0; x < width; x++){
-                text[y][x] = ' ';
+        for(int y = 1; y <= height; y++){
+            for(int x = 1; x <= width; x++){
+                setChar(' ', y, x);
             }
         }
-    }
-
-    private void setChar(char ch, int y, int x){
-        text[y - 1][x - 1] = ch;
     }
 
     public void setText(String str, int y, int x){
@@ -221,42 +239,64 @@ class Display {
         }
     }
 
-    public void attach(ArrayList<Field> fields){
+    public void attach(Field f){
+        for(int i = 0; i < f.length(); i++) {
+            setChar(f.getChar(i), f.getPosY(), f.getPosX() + i);
+        }
+    }
+    
+    public void attachAll(List<Field> fields){
         for(Field f: fields){
-            for(int i = 0; i < f.length; i++) {
-                setChar(f.getChar(i), f.posY, f.posX + i);
-            }
+        	attach(f);
         }
     }
 
     public void show() {
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                System.out.print(text[y][x]);
+        for (int y = 1; y <= height; y++) {
+            for (int x = 1; x <= width; x++) {
+                System.out.print(getChar(y, x));
             }
             System.out.println();
         }
     }
 }
 
+class FieldManager {
+    private List<Field> list = new ArrayList<>();
+    private Map<String, Field> map = new HashMap<>();
+    
+    public void add(Field f) {
+    	list.add(f);
+    	map.put(f.getName(), f);
+    }
+
+    public List<Field> getList() {
+    	return list;
+    }
+    
+    public Field getField(String name) {
+    	return map.get(name);
+    }
+}
+
 class Field {
-    String name;
-    String value;
-    char line;
-    int length;
-    int posY;
-    int posX;
+    private String name;
+    private String value;
+    private char typeChar;
+    private int length;
+    private int posY;
+    private int posX;
 
     public Field(String name, String type, int length, int y, int x) {
         this.name = name;
         this.value = "";
-        this.line = getLineChar(type);
+        this.typeChar = getTypeChar(type);
         this.length = length;
         this.posY = y;
         this.posX = x;
     }
 
-    private char getLineChar(String type) {
+    private char getTypeChar(String type) {
         switch(type) {
             case "CS":
                 return '.';
@@ -266,8 +306,28 @@ class Field {
                 throw new RuntimeException("In DPSATR(). The type must be reserved word.(CS or UL)");
         }
     }
+    
+    public String getName() {
+    	return name;
+    }
+    
+    public int length() {
+    	return length;
+    }
+    
+    public int getPosX() {
+    	return posX;
+    }
+
+    public int getPosY() {
+    	return posY;
+    }
 
     public char getChar(int idx){
-        return idx < value.length() ? value.charAt(idx) : line;
+        return idx < value.length() ? value.charAt(idx) : typeChar;
+    }
+    
+    public void setValue(String value) {
+    	this.value = value;
     }
 }
